@@ -219,13 +219,8 @@ const useDrive = () => {
           setFiles(sortedFiles);
           setFileCache((prev) => ({ ...prev, [data.id]: sortedFiles }));
 
-          // Invalidate parent folder cache
-          const parentId = currentFolderId || "root";
-          setFileCache((prev) => {
-            const newCache = { ...prev };
-            delete newCache[parentId];
-            return newCache;
-          });
+          // Reset toàn bộ cache sau khi tạo thư mục
+          setFileCache({});
         }
       }
     } catch (error) {
@@ -352,9 +347,8 @@ const useDrive = () => {
         const sortedFiles = sortFilesByType(refreshData.files);
         setFiles(sortedFiles);
 
-        // Update cache for current folder
-        const cacheKey = currentFolderId || "root";
-        setFileCache((prev) => ({ ...prev, [cacheKey]: sortedFiles }));
+        // Reset toàn bộ cache sau khi upload
+        setFileCache({});
       }, 2500); // Đợi 1 giây sau khi tất cả upload xong
     } catch (error) {
       console.error("Lỗi khi upload files:", error);
@@ -471,9 +465,8 @@ const useDrive = () => {
       const sortedFiles = sortFilesByType(refreshData.files);
       setFiles(sortedFiles);
 
-      // Update cache for current folder
-      const cacheKey = currentFolderId || "root";
-      setFileCache((prev) => ({ ...prev, [cacheKey]: sortedFiles }));
+      // Reset toàn bộ cache sau khi upload folder
+      setFileCache({});
     } catch (error) {
       console.error("Lỗi:", error);
       setFiles((prev) => prev.filter((f) => f.id !== tempFolder.id));
@@ -734,7 +727,8 @@ const useDrive = () => {
         const refreshData = await refreshResponse.json();
         const sortedFiles = sortFilesByType(refreshData.files);
         setFiles(sortedFiles);
-        setFileCache((prev) => ({ ...prev, [currentFolderId]: sortedFiles }));
+        // Reset toàn bộ cache sau khi xóa
+        setFileCache({});
       } else {
         const refreshResponse = await fetch("/api/drive", {
           headers: { "Cache-Control": "no-cache" },
@@ -742,7 +736,8 @@ const useDrive = () => {
         const refreshData = await refreshResponse.json();
         const sortedFiles = sortFilesByType(refreshData.files);
         setFiles(sortedFiles);
-        setFileCache((prev) => ({ ...prev, root: sortedFiles }));
+        // Reset toàn bộ cache sau khi xóa
+        setFileCache({});
       }
     } catch (error) {
       console.error("Lỗi khi xóa file:", error);

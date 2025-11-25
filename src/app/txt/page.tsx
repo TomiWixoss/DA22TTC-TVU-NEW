@@ -2,17 +2,15 @@
 import React, { useEffect, useState } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 import hljs from "highlight.js";
-import "highlight.js/styles/atom-one-dark.css";
+import "highlight.js/styles/github-dark.css";
 import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast";
 import { useNote } from "../../components/hooks/note";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -23,23 +21,17 @@ import {
   Trash2,
   Plus,
   Search,
-  FileText,
   ChevronLeft,
   ChevronRight,
-  Calendar,
   Download,
   LayoutGrid,
-  LayoutList,
+  List,
   X,
-  Check,
-  Clock,
-  SortAsc,
-  SortDesc,
+  ArrowUpRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ViewMode = "grid" | "list";
-type SortOrder = "newest" | "oldest";
 
 const NotePage = () => {
   const {
@@ -53,7 +45,6 @@ const NotePage = () => {
     setDeleteCode,
     handleAddNote,
     handleDeleteNote,
-    handleKeyDown,
     handleCopy,
     handleGoBack,
     toggleNoteExpansion,
@@ -71,357 +62,232 @@ const NotePage = () => {
   const [showAddForm, setShowAddForm] = useState(false);
 
   useEffect(() => {
-    if (deleteMode) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
+    document.body.style.overflow = deleteMode ? "hidden" : "unset";
+    return () => { document.body.style.overflow = "unset"; };
   }, [deleteMode]);
 
-  // Download note as txt file
   const handleDownload = (content: string, timestamp: number) => {
     const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `note-${new Date(timestamp).toISOString().split("T")[0]}.txt`;
+    a.download = `ghi-chu-${new Date(timestamp).toISOString().split("T")[0]}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast.success("Đã tải xuống!");
+    toast.success("Đã tải xuống");
   };
 
-  // Download all notes
   const handleDownloadAll = () => {
     if (filteredNotes.length === 0) return;
     const allContent = filteredNotes
-      .map(
-        (note, i) =>
-          `=== Ghi chú ${i + 1} (${new Date(note.timestamp).toLocaleString("vi-VN")}) ===\n${note.content}`
-      )
+      .map((note, i) => `--- ${i + 1}. ${new Date(note.timestamp).toLocaleString("vi-VN")} ---\n${note.content}`)
       .join("\n\n");
     const blob = new Blob([allContent], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `all-notes-${new Date().toISOString().split("T")[0]}.txt`;
+    a.download = `tat-ca-ghi-chu-${new Date().toISOString().split("T")[0]}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast.success(`Đã tải ${filteredNotes.length} ghi chú!`);
+    toast.success(`Đã xuất ${filteredNotes.length} ghi chú`);
   };
 
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    return date.toLocaleDateString("vi-VN", { day: "2-digit", month: "short", year: "numeric" });
+  };
 
-    if (days === 0) {
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      if (hours === 0) {
-        const mins = Math.floor(diff / (1000 * 60));
-        return mins <= 1 ? "Vừa xong" : `${mins} phút trước`;
-      }
-      return `${hours} giờ trước`;
-    }
-    if (days === 1) return "Hôm qua";
-    if (days < 7) return `${days} ngày trước`;
-    return date.toLocaleDateString("vi-VN");
+  const formatTime = (timestamp: number) => {
+    return new Date(timestamp).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b">
-        <div className="max-w-6xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" onClick={handleGoBack}>
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-              <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-primary" />
-                <h1 className="text-lg font-semibold">Kho Văn Bản</h1>
-              </div>
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-background border-b">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
+          <div className="flex items-center justify-between h-16">
+            <button
+              onClick={handleGoBack}
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Quay lại</span>
+            </button>
+
+            <span className="text-sm font-medium tracking-tight">txt/</span>
+
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="flex items-center gap-2 text-sm hover:text-primary transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Thêm mới</span>
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <section className="pt-32 pb-16 px-6 lg:px-12">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="max-w-2xl">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-light tracking-tight leading-[1.1] mb-6">
+              Kho<br />Văn Bản
+            </h1>
+            <p className="text-lg text-muted-foreground font-light leading-relaxed">
+              Không gian lưu trữ code, ghi chú và các đoạn văn bản của bạn.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Toolbar */}
+      <section className="sticky top-16 z-40 bg-background border-b">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
+          <div className="flex items-center justify-between py-4 gap-6">
+            {/* Search */}
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Tìm kiếm..."
+                className="w-full bg-transparent border-b border-transparent focus:border-foreground pl-6 pr-8 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
+            {/* Controls */}
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={cn(
+                    "p-2 transition-colors",
+                    viewMode === "grid" ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={cn(
+                    "p-2 transition-colors",
+                    viewMode === "list" ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <List className="w-4 h-4" />
+                </button>
+              </div>
+
+              <button
                 onClick={handleDownloadAll}
                 disabled={filteredNotes.length === 0}
-                className="hidden sm:flex gap-2"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30"
               >
-                <Download className="w-4 h-4" />
-                Tải tất cả
-              </Button>
-              <Button size="sm" onClick={() => setShowAddForm(true)} className="gap-2">
-                <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">Thêm mới</span>
-              </Button>
+                Xuất tất cả
+              </button>
+
+              <span className="text-sm text-muted-foreground tabular-nums">
+                {filteredNotes.length}
+              </span>
             </div>
           </div>
         </div>
-      </header>
+      </section>
 
-      <main className="max-w-6xl mx-auto px-4 py-4 space-y-4">
-        {/* Toolbar */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          {/* Search */}
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm kiếm nội dung..."
-              className="pl-9 pr-9 h-10"
-            />
-            {searchQuery && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-                onClick={() => setSearchQuery("")}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
-
-          {/* View Toggle & Stats */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center border rounded-lg p-1">
-              <Button
-                variant={viewMode === "grid" ? "secondary" : "ghost"}
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setViewMode("grid")}
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "secondary" : "ghost"}
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setViewMode("list")}
-              >
-                <LayoutList className="w-4 h-4" />
-              </Button>
+      {/* Content */}
+      <main className="px-6 lg:px-12 py-12">
+        <div className="max-w-[1400px] mx-auto">
+          {loading ? (
+            <div className={cn(
+              viewMode === "grid"
+                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-border"
+                : "divide-y divide-border"
+            )}>
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-background p-8 animate-pulse">
+                  <div className="h-3 w-24 bg-muted mb-6" />
+                  <div className="h-20 bg-muted mb-4" />
+                  <div className="h-3 w-16 bg-muted" />
+                </div>
+              ))}
             </div>
-
-            <div className="text-sm text-muted-foreground px-2">
-              {filteredNotes.length} ghi chú
-            </div>
-          </div>
-        </div>
-
-        {/* Add Form Modal */}
-        <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
-          <DialogContent className="sm:max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Plus className="w-5 h-5" />
-                Thêm ghi chú mới
-              </DialogTitle>
-            </DialogHeader>
-            <div className="py-2">
-              <TextareaAutosize
-                value={newNote}
-                onChange={(e) => setNewNote(e.target.value)}
-                placeholder="Nhập nội dung văn bản, code, hoặc ghi chú..."
-                className="w-full min-h-[200px] p-4 rounded-lg border bg-muted/30 text-sm font-mono resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-                minRows={8}
-                autoFocus
-              />
-              <p className="text-xs text-muted-foreground mt-2">
-                Hỗ trợ highlight code tự động • Shift+Enter để xuống dòng
+          ) : paginatedNotes.length === 0 ? (
+            <div className="py-24 text-center">
+              <p className="text-muted-foreground mb-8">
+                {searchQuery ? "Không tìm thấy kết quả" : "Chưa có ghi chú nào"}
               </p>
+              {!searchQuery && (
+                <button
+                  onClick={() => setShowAddForm(true)}
+                  className="inline-flex items-center gap-2 text-sm border-b border-foreground pb-1 hover:text-primary hover:border-primary transition-colors"
+                >
+                  Tạo ghi chú đầu tiên
+                  <ArrowUpRight className="w-3 h-3" />
+                </button>
+              )}
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowAddForm(false)}>
-                Hủy
-              </Button>
-              <Button
-                onClick={() => {
-                  handleAddNote();
-                  setShowAddForm(false);
-                }}
-                disabled={!newNote.trim()}
-              >
-                <Check className="w-4 h-4 mr-2" />
-                Lưu ghi chú
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          ) : (
+            <>
+              {/* Grid View */}
+              {viewMode === "grid" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-border border border-border">
+                  {paginatedNotes.map((note) => (
+                    <article
+                      key={note.id}
+                      className={cn(
+                        "group bg-background p-6 lg:p-8 flex flex-col",
+                        deleteMode === note.id && "ring-1 ring-destructive ring-inset"
+                      )}
+                    >
+                      {/* Meta */}
+                      <div className="flex items-center justify-between mb-6">
+                        <time className="text-xs text-muted-foreground tracking-wide uppercase">
+                          {formatDate(note.timestamp)}
+                        </time>
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                          {formatTime(note.timestamp)}
+                        </span>
+                      </div>
 
-        {/* Notes Content */}
-        {loading ? (
-          <div className={cn(
-            viewMode === "grid"
-              ? "grid sm:grid-cols-2 lg:grid-cols-3 gap-4"
-              : "space-y-3"
-          )}>
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="p-4 bg-card rounded-lg border">
-                <Skeleton className="h-4 w-1/3 mb-3" />
-                <Skeleton className="h-24 w-full mb-3" />
-                <Skeleton className="h-4 w-1/2" />
-              </div>
-            ))}
-          </div>
-        ) : paginatedNotes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-              <FileText className="w-8 h-8 text-muted-foreground" />
-            </div>
-            <h3 className="font-medium text-muted-foreground mb-1">
-              {searchQuery ? "Không tìm thấy kết quả" : "Chưa có ghi chú"}
-            </h3>
-            <p className="text-sm text-muted-foreground/70 mb-4">
-              {searchQuery ? "Thử từ khóa khác" : "Bắt đầu lưu trữ văn bản của bạn"}
-            </p>
-            {!searchQuery && (
-              <Button onClick={() => setShowAddForm(true)} variant="outline">
-                <Plus className="w-4 h-4 mr-2" />
-                Thêm ghi chú đầu tiên
-              </Button>
-            )}
-          </div>
-        ) : (
-          <>
-            {/* Grid View */}
-            {viewMode === "grid" && (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {paginatedNotes.map((note) => (
-                  <div
-                    key={note.id}
-                    className={cn(
-                      "group bg-card rounded-lg border hover:border-primary/30 transition-colors overflow-hidden",
-                      deleteMode === note.id && "ring-2 ring-destructive"
-                    )}
-                  >
-                    {/* Content */}
-                    <div className="p-3">
-                      <div className="relative">
-                        <pre
-                          className={cn(
-                            "overflow-x-auto rounded-md",
-                            !expandedNotes[note.id] ? "max-h-[140px] overflow-y-hidden" : ""
-                          )}
-                        >
-                          <code
-                            className="hljs block rounded-md p-3 text-xs leading-relaxed"
-                            dangerouslySetInnerHTML={{
-                              __html: hljs.highlightAuto(note.content).value,
-                            }}
-                          />
-                        </pre>
-
-                        {countLines(note.content) > 6 && !expandedNotes[note.id] && (
-                          <button
-                            className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-[#282c34] to-transparent flex items-end justify-center pb-1 text-xs text-white/70 hover:text-white"
-                            onClick={() => toggleNoteExpansion(note.id)}
+                      {/* Code */}
+                      <div className="flex-1 mb-6">
+                        <div className="relative">
+                          <pre
+                            className={cn(
+                              "overflow-x-auto",
+                              !expandedNotes[note.id] && "max-h-[160px] overflow-y-hidden"
+                            )}
                           >
-                            Xem thêm ↓
-                          </button>
-                        )}
-
-                        {expandedNotes[note.id] && countLines(note.content) > 6 && (
-                          <button
-                            className="w-full mt-1 text-xs text-muted-foreground hover:text-foreground"
-                            onClick={() => toggleNoteExpansion(note.id)}
-                          >
-                            Thu gọn ↑
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="px-3 py-2 border-t bg-muted/30 flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Clock className="w-3 h-3" />
-                        <span>{formatDate(note.timestamp)}</span>
-                      </div>
-
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={() => handleDownload(note.content, note.timestamp)}
-                          title="Tải xuống"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={() => handleCopy(note.content)}
-                          title="Sao chép"
-                        >
-                          <Copy className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-destructive hover:text-destructive"
-                          onClick={() => {
-                            setDeleteMode(note.id);
-                            setDeleteCode("");
-                          }}
-                          title="Xóa"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* List View */}
-            {viewMode === "list" && (
-              <div className="space-y-2">
-                {paginatedNotes.map((note) => (
-                  <div
-                    key={note.id}
-                    className={cn(
-                      "group bg-card rounded-lg border hover:border-primary/30 transition-colors",
-                      deleteMode === note.id && "ring-2 ring-destructive"
-                    )}
-                  >
-                    <div className="flex items-start gap-4 p-4">
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <pre
-                          className={cn(
-                            "overflow-x-auto rounded-md",
-                            !expandedNotes[note.id] ? "max-h-[80px] overflow-y-hidden" : ""
+                            <code
+                              className="hljs block p-4 text-[13px] leading-relaxed rounded-none bg-[#0d1117]"
+                              dangerouslySetInnerHTML={{
+                                __html: hljs.highlightAuto(note.content).value,
+                              }}
+                            />
+                          </pre>
+                          {countLines(note.content) > 6 && !expandedNotes[note.id] && (
+                            <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#0d1117] to-transparent" />
                           )}
-                        >
-                          <code
-                            className="hljs block rounded-md p-3 text-xs leading-relaxed"
-                            dangerouslySetInnerHTML={{
-                              __html: hljs.highlightAuto(note.content).value,
-                            }}
-                          />
-                        </pre>
-
-                        {countLines(note.content) > 3 && (
+                        </div>
+                        {countLines(note.content) > 6 && (
                           <button
-                            className="mt-1 text-xs text-primary hover:underline"
                             onClick={() => toggleNoteExpansion(note.id)}
+                            className="mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
                           >
                             {expandedNotes[note.id] ? "Thu gọn" : "Xem thêm"}
                           </button>
@@ -429,130 +295,211 @@ const NotePage = () => {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex flex-col items-end gap-2">
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Calendar className="w-3 h-3" />
-                          <span>{formatDate(note.timestamp)}</span>
-                        </div>
+                      <div className="flex items-center gap-4 pt-4 border-t border-border opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => handleCopy(note.content)}
+                          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          Sao chép
+                        </button>
+                        <button
+                          onClick={() => handleDownload(note.content, note.timestamp)}
+                          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          Tải xuống
+                        </button>
+                        <button
+                          onClick={() => { setDeleteMode(note.id); setDeleteCode(""); }}
+                          className="text-xs text-muted-foreground hover:text-destructive transition-colors ml-auto"
+                        >
+                          Xóa
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
 
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleDownload(note.content, note.timestamp)}
-                          >
-                            <Download className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleCopy(note.content)}
-                          >
-                            <Copy className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                            onClick={() => {
-                              setDeleteMode(note.id);
-                              setDeleteCode("");
-                            }}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+              {/* List View */}
+              {viewMode === "list" && (
+                <div className="border-t border-border">
+                  {paginatedNotes.map((note, index) => (
+                    <article
+                      key={note.id}
+                      className={cn(
+                        "group border-b border-border",
+                        deleteMode === note.id && "bg-destructive/5"
+                      )}
+                    >
+                      <div className="py-8 lg:py-10">
+                        <div className="flex items-start gap-8 lg:gap-16">
+                          {/* Index */}
+                          <div className="hidden lg:block w-16 shrink-0">
+                            <span className="text-xs text-muted-foreground tabular-nums">
+                              {String((currentPage - 1) * 6 + index + 1).padStart(2, "0")}
+                            </span>
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <pre
+                              className={cn(
+                                "overflow-x-auto",
+                                !expandedNotes[note.id] && "max-h-[120px] overflow-y-hidden"
+                              )}
+                            >
+                              <code
+                                className="hljs block p-4 text-[13px] leading-relaxed rounded-none bg-[#0d1117]"
+                                dangerouslySetInnerHTML={{
+                                  __html: hljs.highlightAuto(note.content).value,
+                                }}
+                              />
+                            </pre>
+                            {countLines(note.content) > 4 && (
+                              <button
+                                onClick={() => toggleNoteExpansion(note.id)}
+                                className="mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                              >
+                                {expandedNotes[note.id] ? "Thu gọn" : "Xem thêm"}
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Meta & Actions */}
+                          <div className="w-32 lg:w-48 shrink-0 flex flex-col items-end gap-4">
+                            <div className="text-right">
+                              <div className="text-xs text-muted-foreground">{formatDate(note.timestamp)}</div>
+                              <div className="text-xs text-muted-foreground">{formatTime(note.timestamp)}</div>
+                            </div>
+                            <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => handleCopy(note.content)}
+                                className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+                              >
+                                <Copy className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDownload(note.content, note.timestamp)}
+                                className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+                              >
+                                <Download className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => { setDeleteMode(note.id); setDeleteCode(""); }}
+                                className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                    </article>
+                  ))}
+                </div>
+              )}
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-1 pt-4">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-9 w-9"
-                  onClick={() => goToPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <nav className="flex items-center justify-center gap-2 pt-16">
+                  <button
+                    onClick={() => goToPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="p-2 text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
 
-                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter((page) => {
-                    if (totalPages <= 7) return true;
-                    if (page === 1 || page === totalPages) return true;
-                    if (Math.abs(page - currentPage) <= 1) return true;
-                    return false;
-                  })
-                  .map((page, idx, arr) => (
-                    <React.Fragment key={page}>
-                      {idx > 0 && arr[idx - 1] !== page - 1 && (
-                        <span className="px-2 text-muted-foreground">...</span>
-                      )}
-                      <Button
-                        variant={currentPage === page ? "default" : "outline"}
-                        size="icon"
-                        className="h-9 w-9"
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <button
+                        key={page}
                         onClick={() => goToPage(page)}
+                        className={cn(
+                          "w-10 h-10 text-sm transition-colors",
+                          currentPage === page
+                            ? "text-foreground border-b-2 border-foreground"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
                       >
                         {page}
-                      </Button>
-                    </React.Fragment>
-                  ))}
+                      </button>
+                    ))}
+                  </div>
 
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-9 w-9"
-                  onClick={() => goToPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
-          </>
-        )}
+                  <button
+                    onClick={() => goToPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="p-2 text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </nav>
+              )}
+            </>
+          )}
+        </div>
       </main>
+
+      {/* Add Dialog */}
+      <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
+        <DialogContent className="sm:max-w-2xl border-border rounded-none">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-normal">Ghi chú mới</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <TextareaAutosize
+              value={newNote}
+              onChange={(e) => setNewNote(e.target.value)}
+              placeholder="Dán code, văn bản hoặc ghi chú của bạn vào đây..."
+              className="w-full min-h-[240px] p-4 bg-muted/50 text-sm font-mono leading-relaxed resize-none outline-none border border-border focus:border-foreground transition-colors"
+              minRows={10}
+              autoFocus
+            />
+          </div>
+          <DialogFooter className="gap-3 sm:gap-3">
+            <Button
+              variant="ghost"
+              onClick={() => setShowAddForm(false)}
+              className="rounded-none"
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={() => { handleAddNote(); setShowAddForm(false); }}
+              disabled={!newNote.trim()}
+              className="rounded-none"
+            >
+              Lưu
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Dialog */}
       <Dialog
         open={deleteMode !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setDeleteMode(null);
-            setDeleteCode("");
-          }
-        }}
+        onOpenChange={(open) => { if (!open) { setDeleteMode(null); setDeleteCode(""); } }}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md border-border rounded-none">
           <DialogHeader>
-            <DialogTitle>Xóa ghi chú</DialogTitle>
-            <DialogDescription>
-              Nhập <strong>XOA</strong> để xác nhận
-            </DialogDescription>
+            <DialogTitle className="text-lg font-normal">Xóa ghi chú</DialogTitle>
           </DialogHeader>
+          <p className="text-sm text-muted-foreground py-2">
+            Nhập <span className="font-mono text-foreground">XOA</span> để xác nhận xóa
+          </p>
           <Input
             value={deleteCode}
             onChange={(e) => setDeleteCode(e.target.value)}
-            placeholder="Nhập mã xác nhận"
-            className="text-center font-mono"
+            placeholder="Nhập tại đây..."
+            className="rounded-none border-border focus:border-foreground font-mono text-center"
             autoFocus
           />
-          <DialogFooter>
+          <DialogFooter className="gap-3 sm:gap-3">
             <Button
-              variant="outline"
-              onClick={() => {
-                setDeleteMode(null);
-                setDeleteCode("");
-              }}
+              variant="ghost"
+              onClick={() => { setDeleteMode(null); setDeleteCode(""); }}
+              className="rounded-none"
             >
               Hủy
             </Button>
@@ -560,6 +507,7 @@ const NotePage = () => {
               variant="destructive"
               onClick={() => handleDeleteNote(deleteMode!)}
               disabled={deleteCode.toUpperCase() !== "XOA"}
+              className="rounded-none"
             >
               Xóa
             </Button>
@@ -567,7 +515,17 @@ const NotePage = () => {
         </DialogContent>
       </Dialog>
 
-      <Toaster position="bottom-right" />
+      <Toaster
+        position="bottom-center"
+        toastOptions={{
+          style: {
+            background: "hsl(var(--foreground))",
+            color: "hsl(var(--background))",
+            borderRadius: 0,
+            fontSize: "13px",
+          },
+        }}
+      />
     </div>
   );
 };

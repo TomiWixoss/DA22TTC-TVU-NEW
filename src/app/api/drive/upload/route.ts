@@ -41,11 +41,13 @@ async function checkRateLimit(ip: string, config: UploadConfig): Promise<{ allow
   const hourKey = `upload_rate:${ip}:hour`;
   const cooldownKey = `upload_cooldown:${ip}`;
 
+  const CONTACT_ADMIN = " Liên hệ Admin nếu bạn cần hỗ trợ tải lên.";
+
   // Kiểm tra cooldown
   const cooldown = await redis.get(cooldownKey);
   if (cooldown) {
     const ttl = await redis.ttl(cooldownKey);
-    return { allowed: false, message: `Bạn đã upload quá nhiều. Vui lòng chờ ${ttl} giây.` };
+    return { allowed: false, message: `Bạn đã upload quá nhiều. Vui lòng chờ ${ttl} giây.${CONTACT_ADMIN}` };
   }
 
   // Kiểm tra rate limit theo phút
@@ -55,7 +57,7 @@ async function checkRateLimit(ip: string, config: UploadConfig): Promise<{ allow
   }
   if (minuteCount > config.maxUploadsPerMinute) {
     await redis.setex(cooldownKey, config.cooldownAfterLimit, "1");
-    return { allowed: false, message: `Vượt quá ${config.maxUploadsPerMinute} file/phút. Chờ ${config.cooldownAfterLimit}s.` };
+    return { allowed: false, message: `Vượt quá ${config.maxUploadsPerMinute} file/phút. Chờ ${config.cooldownAfterLimit}s.${CONTACT_ADMIN}` };
   }
 
   // Kiểm tra rate limit theo giờ
@@ -64,7 +66,7 @@ async function checkRateLimit(ip: string, config: UploadConfig): Promise<{ allow
     await redis.expire(hourKey, 3600);
   }
   if (hourCount > config.maxUploadsPerHour) {
-    return { allowed: false, message: `Vượt quá ${config.maxUploadsPerHour} file/giờ.` };
+    return { allowed: false, message: `Vượt quá ${config.maxUploadsPerHour} file/giờ.${CONTACT_ADMIN}` };
   }
 
   return { allowed: true };
@@ -72,24 +74,25 @@ async function checkRateLimit(ip: string, config: UploadConfig): Promise<{ allow
 
 function validateFile(file: File, config: UploadConfig): { valid: boolean; message?: string } {
   const maxSizeBytes = config.maxFileSize * 1024 * 1024;
+  const CONTACT_ADMIN = " Liên hệ Admin nếu bạn cần hỗ trợ tải lên.";
   
   // Kiểm tra kích thước
   if (file.size > maxSizeBytes) {
-    return { valid: false, message: `File quá lớn. Tối đa ${config.maxFileSize}MB.` };
+    return { valid: false, message: `File quá lớn. Tối đa ${config.maxFileSize}MB.${CONTACT_ADMIN}` };
   }
 
   // Kiểm tra extension bị chặn
   const fileName = file.name.toLowerCase();
   for (const ext of config.blockedExtensions) {
     if (fileName.endsWith(ext.toLowerCase())) {
-      return { valid: false, message: `Loại file ${ext} không được phép upload.` };
+      return { valid: false, message: `Loại file ${ext} không được phép upload.${CONTACT_ADMIN}` };
     }
   }
 
   // Kiểm tra tên file có ký tự đặc biệt nguy hiểm
   const dangerousChars = /[<>:"/\\|?*\x00-\x1f]/;
   if (dangerousChars.test(file.name)) {
-    return { valid: false, message: "Tên file chứa ký tự không hợp lệ." };
+    return { valid: false, message: `Tên file chứa ký tự không hợp lệ.${CONTACT_ADMIN}` };
   }
 
   return { valid: true };

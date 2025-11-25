@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { useFileList } from "./hooks/file-list";
 import { FileListProps } from "../types";
@@ -40,6 +40,7 @@ import {
   Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import gsap from "gsap";
 
 export default function FileList({
   files,
@@ -56,6 +57,10 @@ export default function FileList({
   onCheckFolderContent,
   onDelete,
 }: FileListProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
+
   const {
     files: sortedFiles,
     uniqueExtensions,
@@ -68,14 +73,12 @@ export default function FileList({
     isDragging,
     compressingFolder,
     compressionProgress,
-    openMenuId,
     showDeleteModal,
     deletePassword,
     fileToDelete,
     isDeleting,
     isAdminMode,
     handleMouseLeave,
-    setOpenMenuId,
     handleDragEnter,
     handleDragLeave,
     handleDrop,
@@ -107,9 +110,70 @@ export default function FileList({
     onDelete,
   });
 
+  // Animate files on load
+  useEffect(() => {
+    if (!isLoading && gridRef.current && sortedFiles.length > 0) {
+      const items = gridRef.current.querySelectorAll(".file-item");
+      gsap.fromTo(
+        items,
+        { opacity: 0, y: 20, scale: 0.98 },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.4,
+          stagger: 0.03,
+          ease: "power3.out",
+        }
+      );
+    }
+  }, [isLoading, sortedFiles, isGridView]);
+
+  // Toolbar animation
+  useEffect(() => {
+    if (toolbarRef.current) {
+      gsap.fromTo(
+        toolbarRef.current,
+        { opacity: 0, y: -10 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }
+      );
+    }
+  }, []);
+
+  const handleFileHover = (e: React.MouseEvent, enter: boolean) => {
+    if (enter) {
+      gsap.to(e.currentTarget, {
+        y: -2,
+        duration: 0.2,
+        ease: "power2.out",
+      });
+    } else {
+      gsap.to(e.currentTarget, {
+        y: 0,
+        duration: 0.2,
+        ease: "power2.out",
+      });
+    }
+  };
+
+  const handleFileClick = (fileId: string, mimeType: string) => {
+    if (mimeType === "application/vnd.google-apps.folder") {
+      // Animate click
+      gsap.to(`[data-file-id="${fileId}"]`, {
+        scale: 0.98,
+        duration: 0.1,
+        yoyo: true,
+        repeat: 1,
+        ease: "power2.inOut",
+        onComplete: () => onFolderClick(fileId),
+      });
+    }
+  };
+
   return (
     <div
-      className="flex-1 flex flex-col overflow-hidden bg-background"
+      ref={containerRef}
+      className="flex-1 flex flex-col overflow-hidden bg-background relative"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
@@ -117,31 +181,31 @@ export default function FileList({
     >
       {/* Drag Overlay */}
       {isDragging && (
-        <div className="absolute inset-0 bg-background/95 border-2 border-dashed border-foreground flex items-center justify-center z-50">
+        <div className="absolute inset-0 bg-background/98 border-2 border-dashed border-foreground/20 flex items-center justify-center z-50">
           <div className="text-center">
-            <UploadCloud className="mx-auto w-12 h-12 text-muted-foreground mb-4" />
-            <p className="text-sm text-muted-foreground">Thả file để tải lên</p>
+            <UploadCloud className="mx-auto w-16 h-16 text-muted-foreground mb-6 animate-bounce" />
+            <p className="text-lg font-light text-muted-foreground">Thả file để tải lên</p>
           </div>
         </div>
       )}
 
       {/* Toolbar */}
-      <div className="border-b px-6 py-3">
+      <div ref={toolbarRef} className="border-b px-6 lg:px-8 py-4">
         {/* Breadcrumb */}
         {currentFolderId && (
-          <div className="flex items-center gap-1 text-sm mb-3 overflow-x-auto">
+          <div className="flex items-center gap-2 text-sm mb-4 overflow-x-auto pb-1">
             <button
               onClick={() => onBackClick()}
-              className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+              className="text-muted-foreground hover:text-foreground transition-colors shrink-0 hover:underline underline-offset-4"
             >
               DA22TTC
             </button>
             {folderPath.map((folder, index) => (
               <React.Fragment key={folder.id}>
-                <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0" />
+                <ChevronRight className="w-3 h-3 text-muted-foreground/50 shrink-0" />
                 <button
                   onClick={() => onBreadcrumbClick(folder.id, index)}
-                  className="text-muted-foreground hover:text-foreground transition-colors truncate max-w-[150px]"
+                  className="text-muted-foreground hover:text-foreground transition-colors truncate max-w-[150px] hover:underline underline-offset-4"
                 >
                   {folder.name}
                 </button>
@@ -149,8 +213,8 @@ export default function FileList({
             ))}
             {currentFolderName && (
               <>
-                <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0" />
-                <span className="text-foreground truncate max-w-[150px]">{currentFolderName}</span>
+                <ChevronRight className="w-3 h-3 text-muted-foreground/50 shrink-0" />
+                <span className="text-foreground font-medium truncate max-w-[150px]">{currentFolderName}</span>
               </>
             )}
           </div>
@@ -158,15 +222,29 @@ export default function FileList({
 
         {/* Actions */}
         <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {currentFolderId && (
               <button
-                onClick={onBackClick}
-                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => {
+                  gsap.to(".back-btn", {
+                    x: -4,
+                    duration: 0.15,
+                    yoyo: true,
+                    repeat: 1,
+                    onComplete: onBackClick,
+                  });
+                }}
+                className="back-btn flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span className="hidden sm:inline">Quay lại</span>
               </button>
+            )}
+            
+            {!isLoading && (
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {sortedFiles.length} mục
+              </span>
             )}
           </div>
 
@@ -176,7 +254,7 @@ export default function FileList({
               <button
                 onClick={() => setShowFolders(!showFolders)}
                 className={cn(
-                  "p-2 transition-colors",
+                  "p-2.5 transition-all duration-200",
                   showFolders ? "text-foreground" : "text-muted-foreground hover:text-foreground"
                 )}
                 title={showFolders ? "Ẩn thư mục" : "Hiện thư mục"}
@@ -187,15 +265,15 @@ export default function FileList({
               {/* Filter Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-1 p-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  <button className="flex items-center gap-1.5 p-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
                     <Filter className="w-4 h-4" />
-                    <span className="hidden sm:inline">
+                    <span className="hidden sm:inline text-xs">
                       {selectedExtension ? `.${selectedExtension}` : "Loại"}
                     </span>
                     <ChevronDown className="w-3 h-3" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40 rounded-none border-border">
+                <DropdownMenuContent align="end" className="w-44 rounded-none border-border">
                   <DropdownMenuItem onClick={() => setSelectedExtension(null)} className="text-sm">
                     <Check className={cn("mr-2 w-3 h-3", !selectedExtension ? "opacity-100" : "opacity-0")} />
                     Tất cả
@@ -212,13 +290,13 @@ export default function FileList({
               {/* Sort Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-1 p-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  <button className="flex items-center gap-1.5 p-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
                     <ArrowUpDown className="w-4 h-4" />
-                    <span className="hidden sm:inline">Sắp xếp</span>
+                    <span className="hidden sm:inline text-xs">Sắp xếp</span>
                     <ChevronDown className="w-3 h-3" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40 rounded-none border-border">
+                <DropdownMenuContent align="end" className="w-44 rounded-none border-border">
                   <DropdownMenuItem onClick={() => setSortCriteria(SortCriteria.Default)} className="text-sm">
                     <Check className={cn("mr-2 w-3 h-3", sortCriteria === SortCriteria.Default ? "opacity-100" : "opacity-0")} />
                     Mặc định
@@ -240,8 +318,18 @@ export default function FileList({
 
               {/* View Toggle */}
               <button
-                onClick={() => setIsGridView(!isGridView)}
-                className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => {
+                  gsap.to(".view-toggle", {
+                    rotate: 180,
+                    duration: 0.3,
+                    ease: "power2.inOut",
+                    onComplete: () => {
+                      gsap.set(".view-toggle", { rotate: 0 });
+                      setIsGridView(!isGridView);
+                    },
+                  });
+                }}
+                className="view-toggle p-2.5 text-muted-foreground hover:text-foreground transition-colors"
               >
                 {isGridView ? <List className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
               </button>
@@ -253,18 +341,23 @@ export default function FileList({
       {/* File List */}
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
-          <div className="p-6">
+          <div className="p-6 lg:p-8">
             <div className={cn(
-              "gap-px bg-border",
-              isGridView ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "space-y-px"
+              isGridView 
+                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" 
+                : "space-y-2"
             )}>
               {[...Array(8)].map((_, i) => (
-                <div key={i} className="bg-background p-4 animate-pulse">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-muted" />
+                <div 
+                  key={i} 
+                  className="bg-muted/30 p-5 animate-pulse"
+                  style={{ animationDelay: `${i * 0.05}s` }}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-muted/50 rounded" />
                     <div className="flex-1">
-                      <div className="h-4 w-32 bg-muted mb-2" />
-                      <div className="h-3 w-20 bg-muted" />
+                      <div className="h-4 w-32 bg-muted/50 mb-2 rounded" />
+                      <div className="h-3 w-20 bg-muted/50 rounded" />
                     </div>
                   </div>
                 </div>
@@ -273,45 +366,48 @@ export default function FileList({
           </div>
         ) : sortedFiles.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full py-24">
-            <Folder className="w-12 h-12 text-muted-foreground mb-4" />
-            <p className="text-sm text-muted-foreground">Thư mục trống</p>
+            <Folder className="w-16 h-16 text-muted-foreground/30 mb-6" />
+            <p className="text-lg font-light text-muted-foreground mb-2">Thư mục trống</p>
+            <p className="text-sm text-muted-foreground/60">Kéo thả file vào đây để tải lên</p>
           </div>
         ) : (
-          <div className="p-6">
+          <div ref={gridRef} className="p-6 lg:p-8">
             {isGridView ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-px bg-border border border-border">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {sortedFiles.map((file) => (
                   <article
                     key={file.id}
+                    data-file-id={file.id}
                     className={cn(
-                      "group bg-background p-4 cursor-pointer transition-colors hover:bg-muted/50",
+                      "file-item group bg-card border border-border p-5 cursor-pointer transition-all duration-200",
+                      "hover:border-foreground/20",
                       file.isUploading && "opacity-60 pointer-events-none"
                     )}
-                    onClick={() =>
-                      file.mimeType === "application/vnd.google-apps.folder"
-                        ? onFolderClick(file.id)
-                        : null
-                    }
-                    onMouseLeave={handleMouseLeave}
+                    onClick={() => handleFileClick(file.id, file.mimeType)}
+                    onMouseEnter={(e) => handleFileHover(e, true)}
+                    onMouseLeave={(e) => {
+                      handleFileHover(e, false);
+                      handleMouseLeave();
+                    }}
                   >
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start justify-between mb-4">
                       {file.mimeType === "application/vnd.google-apps.folder" ? (
-                        <Folder className="w-8 h-8 text-foreground" />
+                        <Folder className="w-10 h-10 text-foreground transition-transform group-hover:scale-105" />
                       ) : (
-                        <File className="w-8 h-8 text-muted-foreground" />
+                        <File className="w-10 h-10 text-muted-foreground transition-transform group-hover:scale-105" />
                       )}
 
                       {!file.isUploading && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <button
-                              className="p-1 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                              className="p-1.5 opacity-0 group-hover:opacity-100 transition-all text-muted-foreground hover:text-foreground"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <MoreVertical className="w-4 h-4" />
                             </button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-40 rounded-none border-border">
+                          <DropdownMenuContent align="end" className="w-44 rounded-none border-border">
                             {file.mimeType !== "application/vnd.google-apps.folder" && (
                               <DropdownMenuItem
                                 onClick={(e) => {
@@ -354,21 +450,21 @@ export default function FileList({
                       )}
                     </div>
 
-                    <div className="text-sm font-medium truncate mb-1">{file.name}</div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <div className="text-sm font-medium truncate mb-2 group-hover:text-primary transition-colors">{file.name}</div>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <span>{new Date(file.createdTime).toLocaleDateString("vi-VN")}</span>
-                      {file.size && <span>{formatFileSize(file.size)}</span>}
+                      {file.size && <span className="tabular-nums">{formatFileSize(file.size)}</span>}
                     </div>
 
                     {(file.isUploading || compressingFolder === file.id) && (
-                      <div className="mt-3">
+                      <div className="mt-4">
                         <div className="h-1 bg-muted overflow-hidden">
                           <div
-                            className="h-full bg-foreground transition-all"
+                            className="h-full bg-foreground transition-all duration-300"
                             style={{ width: `${file.isUploading ? file.uploadProgress : compressionProgress}%` }}
                           />
                         </div>
-                        <div className="text-xs text-muted-foreground text-right mt-1">
+                        <div className="text-xs text-muted-foreground text-right mt-1 tabular-nums">
                           {file.isUploading ? file.uploadProgress : compressionProgress}%
                         </div>
                       </div>
@@ -381,16 +477,18 @@ export default function FileList({
                 {sortedFiles.map((file) => (
                   <article
                     key={file.id}
+                    data-file-id={file.id}
                     className={cn(
-                      "group flex items-center gap-4 p-4 cursor-pointer transition-colors hover:bg-muted/50",
+                      "file-item group flex items-center gap-5 p-4 cursor-pointer transition-all duration-200",
+                      "hover:bg-muted/30",
                       file.isUploading && "opacity-60 pointer-events-none"
                     )}
-                    onClick={() =>
-                      file.mimeType === "application/vnd.google-apps.folder"
-                        ? onFolderClick(file.id)
-                        : null
-                    }
-                    onMouseLeave={handleMouseLeave}
+                    onClick={() => handleFileClick(file.id, file.mimeType)}
+                    onMouseEnter={(e) => handleFileHover(e, true)}
+                    onMouseLeave={(e) => {
+                      handleFileHover(e, false);
+                      handleMouseLeave();
+                    }}
                   >
                     {file.mimeType === "application/vnd.google-apps.folder" ? (
                       <Folder className="w-6 h-6 text-foreground shrink-0" />
@@ -399,25 +497,25 @@ export default function FileList({
                     )}
 
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium truncate">{file.name}</div>
+                      <div className="text-sm font-medium truncate group-hover:text-primary transition-colors">{file.name}</div>
                     </div>
 
-                    <div className="hidden sm:flex items-center gap-6 text-xs text-muted-foreground shrink-0">
+                    <div className="hidden sm:flex items-center gap-8 text-xs text-muted-foreground shrink-0">
                       <span className="w-24">{new Date(file.createdTime).toLocaleDateString("vi-VN")}</span>
-                      <span className="w-20 text-right">{file.size ? formatFileSize(file.size) : "—"}</span>
+                      <span className="w-20 text-right tabular-nums">{file.size ? formatFileSize(file.size) : "—"}</span>
                     </div>
 
                     {!file.isUploading && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button
-                            className="p-1 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground shrink-0"
+                            className="p-1.5 opacity-0 group-hover:opacity-100 transition-all text-muted-foreground hover:text-foreground shrink-0"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <MoreVertical className="w-4 h-4" />
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40 rounded-none border-border">
+                        <DropdownMenuContent align="end" className="w-44 rounded-none border-border">
                           {file.mimeType !== "application/vnd.google-apps.folder" && (
                             <DropdownMenuItem
                               onClick={(e) => {
@@ -463,7 +561,7 @@ export default function FileList({
                       <div className="w-24 shrink-0">
                         <div className="h-1 bg-muted overflow-hidden">
                           <div
-                            className="h-full bg-foreground transition-all"
+                            className="h-full bg-foreground transition-all duration-300"
                             style={{ width: `${file.isUploading ? file.uploadProgress : compressionProgress}%` }}
                           />
                         </div>

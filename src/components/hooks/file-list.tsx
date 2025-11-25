@@ -133,10 +133,62 @@ export const useFileList = ({
   };
 
   // Thay thế dòng const sortedFiles = [...folders, ...regularFiles]; bằng:
-  const sortedFiles = useMemo(
-    () => getSortedFiles(files),
-    [files, showFolders, sortCriteria, selectedExtension]
-  );
+  const sortedFiles = useMemo(() => {
+    let foldersList = files.filter(
+      (file) => file.mimeType === "application/vnd.google-apps.folder"
+    );
+    let regularFilesList = files.filter(
+      (file) => file.mimeType !== "application/vnd.google-apps.folder"
+    );
+
+    // Lọc theo đuôi file nếu có
+    if (selectedExtension) {
+      regularFilesList = regularFilesList.filter(
+        (file) =>
+          getFileExtension(file.name).toLowerCase() === selectedExtension
+      );
+    }
+
+    switch (sortCriteria) {
+      case SortCriteria.Name:
+        foldersList.sort((a, b) => a.name.localeCompare(b.name));
+        regularFilesList.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case SortCriteria.Size:
+        foldersList.sort(
+          (a, b) =>
+            new Date(b.createdTime).getTime() -
+            new Date(a.createdTime).getTime()
+        );
+        regularFilesList.sort((a, b) => (b.size || 0) - (a.size || 0));
+        break;
+      case SortCriteria.Date:
+        foldersList.sort(
+          (a, b) =>
+            new Date(b.createdTime).getTime() -
+            new Date(a.createdTime).getTime()
+        );
+        regularFilesList.sort(
+          (a, b) =>
+            new Date(b.createdTime).getTime() -
+            new Date(a.createdTime).getTime()
+        );
+        break;
+      default:
+        foldersList.sort(
+          (a, b) =>
+            new Date(b.createdTime).getTime() -
+            new Date(a.createdTime).getTime()
+        );
+        regularFilesList.sort(
+          (a, b) =>
+            new Date(b.createdTime).getTime() -
+            new Date(a.createdTime).getTime()
+        );
+    }
+
+    return showFolders ? [...foldersList, ...regularFilesList] : regularFilesList;
+  }, [files, showFolders, sortCriteria, selectedExtension]);
 
   // State để lưu trữ chế độ hiển thị
   const [isGridView, setIsGridView] = useState(false);

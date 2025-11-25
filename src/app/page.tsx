@@ -10,6 +10,9 @@ import {
   TechBadge,
   PulseRing,
   NeonBorder,
+  CyberText,
+  HackerText,
+  MatrixText,
 } from "@/components/ui/tech";
 import { HardDrive, FileText, Lock, ChevronLeft, ChevronRight, Database } from "lucide-react";
 
@@ -153,7 +156,7 @@ export default function Home() {
                 <Database className="w-5 h-5 text-[#00ff88]" />
               </div>
               <div>
-                <GlitchText className="text-lg font-bold font-mono" intensity="low">DA22TTC</GlitchText>
+                <CyberText className="text-lg font-bold" primaryColor="#00ff88" secondaryColor="#00d4ff">DA22TTC</CyberText>
                 <p className="text-[10px] text-muted-foreground font-mono">SELECT_WORLD</p>
               </div>
             </div>
@@ -212,12 +215,15 @@ export default function Home() {
 
                   {/* Title */}
                   <div className="text-center mb-4">
-                    <GlitchText
-                      className="text-2xl font-bold font-mono mb-1"
-                      intensity={world.status === "available" ? "low" : "high"}
-                    >
-                      {world.title}
-                    </GlitchText>
+                    {world.status === "available" ? (
+                      <HackerText className="text-2xl font-bold mb-1" color={world.color} triggerOnHover>
+                        {world.title}
+                      </HackerText>
+                    ) : (
+                      <MatrixText className="text-2xl font-bold mb-1" color="#666666" continuous>
+                        {world.title}
+                      </MatrixText>
+                    )}
                     <p className="text-xs text-muted-foreground font-mono">{world.subtitle}</p>
                   </div>
 
@@ -330,9 +336,9 @@ export default function Home() {
 
         {/* Swipe Hint */}
         <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20">
-          <p className="text-[10px] font-mono text-muted-foreground animate-pulse">
+          <GlitchText className="text-[10px] font-mono text-muted-foreground" intensity="low">
             ← SWIPE_TO_NAVIGATE →
-          </p>
+          </GlitchText>
         </div>
       </div>
     </TechLayout>

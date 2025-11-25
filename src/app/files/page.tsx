@@ -22,6 +22,8 @@ import {
   HologramEffect,
   RadarScan,
   TechProgress,
+  TerminalText,
+  NeonText,
 } from "@/components/ui/tech";
 import { useFileList } from "@/components/hooks/file-list";
 import {
@@ -148,7 +150,7 @@ export default function FilesPage() {
                 <span className="text-xs font-mono hidden sm:inline">HOME</span>
               </Link>
               <div className="h-4 w-px bg-border" />
-              <GlitchText className="text-sm font-mono font-bold" intensity="low">FILE_SYSTEM</GlitchText>
+              <NeonText className="text-sm font-mono font-bold" color="#00ff88" flickerSpeed="slow" glowIntensity="medium">FILE_SYSTEM</NeonText>
             </div>
 
             <div className="flex-1 max-w-xl mx-4 hidden md:block">
@@ -240,7 +242,7 @@ export default function FilesPage() {
                     <RadarScan size={80} color="#00ff88" speed={2} />
                     <div className="flex items-center gap-2">
                       <LoadingDots color="#00ff88" size={6} />
-                      <span className="text-xs font-mono text-muted-foreground">SCANNING_FILES</span>
+                      <TerminalText color="#00ff88" prefix="// " typingSpeed={80}>SCANNING_FILES...</TerminalText>
                     </div>
                   </div>
                 </div>

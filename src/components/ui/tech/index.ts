@@ -25,3 +25,13 @@ export { TechTooltip } from "./TechTooltip";
 export { RadarScan } from "./RadarScan";
 export { TechInput } from "./TechInput";
 export { SystemStats } from "./SystemStats";
+
+// Modern Text Effects
+export { TerminalText } from "./TerminalText";
+export { PixelText } from "./PixelText";
+export { ScrambleText } from "./ScrambleText";
+export { WaveText } from "./WaveText";
+export { NeonText } from "./NeonText";
+export { HackerText } from "./HackerText";
+export { MatrixText } from "./MatrixText";
+export { CyberText } from "./CyberText";

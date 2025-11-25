@@ -13,6 +13,8 @@ import {
   RadarScan,
   LoadingDots,
   GlitchText,
+  WaveText,
+  PixelText,
 } from "@/components/ui/tech";
 import {
   TxtToolbar,
@@ -124,13 +126,13 @@ const TxtPage = () => {
             <div className="h-4 w-px bg-border" />
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4 text-[#00d4ff]" />
-              <GlitchText className="text-sm font-mono font-bold" intensity="low">TXT_STORAGE</GlitchText>
+              <WaveText className="text-sm font-bold" color="#00d4ff" waveHeight={3} speed={80}>TXT_STORAGE</WaveText>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs font-mono text-muted-foreground hidden sm:inline">
-              {filteredNotes.length} NOTES
-            </span>
+            <GlitchText className="text-xs font-mono text-muted-foreground hidden sm:inline" intensity="low">
+              {`${filteredNotes.length} NOTES`}
+            </GlitchText>
             <button
               onClick={() => setShowAddForm(true)}
               className="flex items-center gap-2 px-3 py-1.5 bg-[#00d4ff] text-black font-mono text-xs font-bold hover:bg-[#00d4ff]/90 transition-colors"
@@ -172,7 +174,7 @@ const TxtPage = () => {
                   <RadarScan size={80} color="#00d4ff" speed={2} />
                   <div className="flex items-center gap-2">
                     <LoadingDots color="#00d4ff" size={6} />
-                    <span className="text-xs font-mono text-muted-foreground">LOADING_NOTES</span>
+                    <PixelText color="#00d4ff" pixelSize={2} scrambleOnMount>LOADING_NOTES</PixelText>
                   </div>
                 </div>
               </div>

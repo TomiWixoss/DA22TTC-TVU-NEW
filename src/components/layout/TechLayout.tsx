@@ -29,21 +29,23 @@ export const TechLayout: React.FC<TechLayoutProps> = ({
     // Kill any existing animations on this element
     gsap.killTweensOf(container);
     
-    // Set initial state immediately to prevent flash
-    gsap.set(container, { opacity: 0 });
-
-    // Initial page load animation with slight delay for DOM ready
-    requestAnimationFrame(() => {
-      gsap.to(container, { 
-        opacity: 1, 
-        duration: 0.5, 
-        ease: "power2.out" 
-      });
-    });
+    // Use gsap.context for proper cleanup
+    const ctx = gsap.context(() => {
+      // Set initial state and animate in one go
+      gsap.fromTo(container, 
+        { opacity: 0 },
+        { 
+          opacity: 1, 
+          duration: 0.5, 
+          ease: "power2.out",
+          overwrite: "auto"
+        }
+      );
+    }, container);
 
     // Cleanup on unmount
     return () => {
-      gsap.killTweensOf(container);
+      ctx.revert();
     };
   }, []);
 

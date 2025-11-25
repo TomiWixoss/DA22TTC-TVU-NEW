@@ -196,6 +196,9 @@ const useDrive = () => {
       if (data.error) {
         toast.error("Lỗi khi tạo thư mục");
       } else {
+        // Reset toàn bộ cache TRƯỚC khi làm gì khác
+        setFileCache({});
+        
         // Đóng modal và reset form
         setIsCreateFolderModalOpen(false);
         setNewFolderName("");
@@ -214,15 +217,19 @@ const useDrive = () => {
           setCurrentFolderId(data.id);
           setCurrentFolderName(newFolderName);
 
-          // Lấy nội dung thư mục mới
-          const folderResponse = await fetch(`/api/drive?folderId=${data.id}`);
-          const folderData = await folderResponse.json();
-          const sortedFiles = sortFilesByType(folderData.files);
-          setFiles(sortedFiles);
-          setFileCache((prev) => ({ ...prev, [data.id]: sortedFiles }));
-
-          // Reset toàn bộ cache sau khi tạo thư mục
-          setFileCache({});
+          // Thư mục mới tạo sẽ trống, set files = [] ngay
+          setFiles([]);
+          
+          // Vẫn fetch để đảm bảo sync với server (có thể có metadata)
+          try {
+            const folderResponse = await fetch(`/api/drive?folderId=${data.id}`);
+            const folderData = await folderResponse.json();
+            const sortedFiles = sortFilesByType(folderData.files || []);
+            setFiles(sortedFiles);
+            setFileCache((prev) => ({ ...prev, [data.id]: sortedFiles }));
+          } catch (err) {
+            console.error("Lỗi khi lấy nội dung thư mục mới:", err);
+          }
         }
       }
     } catch (error) {

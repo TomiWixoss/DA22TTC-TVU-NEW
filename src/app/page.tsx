@@ -89,20 +89,21 @@ export default function Home() {
     // Kill any existing animations
     gsap.killTweensOf(container);
     
-    // Set initial state
-    gsap.set(container, { opacity: 0 });
-    
-    // Animate with requestAnimationFrame for DOM ready
-    requestAnimationFrame(() => {
-      gsap.to(container, { 
-        opacity: 1, 
-        duration: 0.8, 
-        ease: "power2.out" 
-      });
-    });
+    // Use gsap.context for proper cleanup
+    const ctx = gsap.context(() => {
+      gsap.fromTo(container, 
+        { opacity: 0 },
+        { 
+          opacity: 1, 
+          duration: 0.8, 
+          ease: "power2.out",
+          overwrite: "auto"
+        }
+      );
+    }, container);
 
     return () => {
-      gsap.killTweensOf(container);
+      ctx.revert();
     };
   }, []);
 

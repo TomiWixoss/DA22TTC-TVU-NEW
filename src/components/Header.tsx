@@ -2,7 +2,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { Notebook, Search, Sparkles, Sun, Moon } from "lucide-react";
+import { Notebook, Search, Sparkles, Sun, Moon, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -12,6 +12,8 @@ interface HeaderProps {
   isAISearch: boolean;
   onToggleAISearch: () => void;
   onSearch: () => void;
+  onReloadCache?: () => void;
+  isReloading?: boolean;
 }
 
 export default function Header({
@@ -20,6 +22,8 @@ export default function Header({
   isAISearch,
   onToggleAISearch,
   onSearch,
+  onReloadCache,
+  isReloading,
 }: HeaderProps) {
   const { theme, setTheme } = useTheme();
   const router = useRouter();
@@ -79,6 +83,19 @@ export default function Header({
         </div>
       </div>
       <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto justify-center">
+        {onReloadCache && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onReloadCache}
+            disabled={isReloading}
+            title="Reload cache"
+          >
+            <RefreshCw className={`h-[1.2rem] w-[1.2rem] ${isReloading ? 'animate-spin' : ''}`} />
+            <span className="sr-only">Reload cache</span>
+          </Button>
+        )}
+
         <Button
           variant="ghost"
           size="icon"

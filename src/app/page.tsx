@@ -49,6 +49,8 @@ export default function Home() {
     setIsCreateFolderModalOpen,
     newFolderName,
     setNewFolderName,
+    handleReloadCache,
+    isReloading,
   } = useDrive();
   const { theme } = useTheme();
 
@@ -89,6 +91,8 @@ export default function Home() {
           isAISearch={isAISearch}
           onToggleAISearch={handleToggleAISearch}
           onSearch={handleSearchClick}
+          onReloadCache={handleReloadCache}
+          isReloading={isReloading}
         />
 
         <div className="flex flex-1 overflow-hidden">

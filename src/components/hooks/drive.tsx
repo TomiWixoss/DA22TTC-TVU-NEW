@@ -24,6 +24,7 @@ const useDrive = () => {
   const [newFolderName, setNewFolderName] = useState("");
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [fileCache, setFileCache] = useState<Record<string, FileItem[]>>({});
+  const [isReloading, setIsReloading] = useState(false);
 
   useEffect(() => {
     const fetchDriveInfo = async () => {
@@ -736,6 +737,48 @@ const useDrive = () => {
     }
   };
 
+  const handleReloadCache = async () => {
+    setIsReloading(true);
+    try {
+      // Gọi API để xóa Redis cache
+      const response = await fetch("/api/drive/reload-cache", {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        throw new Error("Lỗi khi xóa cache");
+      }
+
+      // Reset local cache
+      setFileCache({});
+
+      // Fetch lại data
+      setIsFilesLoading(true);
+      
+      const driveResponse = await fetch("/api/drive/info", {
+        headers: { "Cache-Control": "no-cache" },
+      });
+      const driveData = await driveResponse.json();
+      setDriveInfo(driveData);
+
+      const filesResponse = await fetch(
+        currentFolderId ? `/api/drive?folderId=${currentFolderId}` : "/api/drive",
+        { headers: { "Cache-Control": "no-cache" } }
+      );
+      const filesData = await filesResponse.json();
+      const sortedFiles = sortFilesByType(filesData.files || []);
+      setFiles(sortedFiles);
+
+      toast.success("Đã reload cache thành công!");
+    } catch (error) {
+      console.error("Lỗi khi reload cache:", error);
+      toast.error("Có lỗi xảy ra khi reload cache");
+    } finally {
+      setIsReloading(false);
+      setIsFilesLoading(false);
+    }
+  };
+
   return {
     files,
     setFiles,
@@ -779,6 +822,8 @@ const useDrive = () => {
     setIsCreateFolderModalOpen,
     newFolderName,
     setNewFolderName,
+    handleReloadCache,
+    isReloading,
   };
 };
 

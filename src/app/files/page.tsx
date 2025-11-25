@@ -115,7 +115,9 @@ export default function FilesPage() {
   useEffect(() => {
     if (!isLoading && gridRef.current && sortedFiles.length > 0) {
       const items = gridRef.current.querySelectorAll(".file-item");
-      gsap.fromTo(items, { opacity: 0.5, y: 10 }, { opacity: 1, y: 0, duration: 0.3, stagger: 0.02, ease: "power2.out" });
+      // Reset opacity first then animate
+      gsap.set(items, { opacity: 1, y: 0 });
+      gsap.fromTo(items, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, stagger: 0.02, ease: "power2.out" });
     }
   }, [isLoading, sortedFiles, isGridView]);
 
@@ -243,7 +245,7 @@ export default function FilesPage() {
               ) : sortedFiles.length === 0 ? (
                 <HomeEmptyState onCreateFolder={handleCreateFolder} onUploadFile={triggerFileUpload} />
               ) : (
-                <div ref={gridRef} className={isGridView ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" : "space-y-2"}>
+                <div ref={gridRef} className={isGridView ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" : "flex flex-col gap-1"}>
                   {sortedFiles.map((file) => (
                     <div key={file.id} className="file-item">
                       <HomeFileCard
@@ -255,6 +257,7 @@ export default function FilesPage() {
                         isUploading={file.isUploading}
                         uploadProgress={file.uploadProgress}
                         isAdmin={isAdminMode}
+                        viewMode={isGridView ? "grid" : "list"}
                         onFolderClick={() => handleFolderClick(file.id, file.name)}
                         onCopyLink={() => { navigator.clipboard.writeText(generateDownloadLink(file.id)); toast.success("LINK_COPIED"); }}
                         onDownload={() => { file.mimeType === "application/vnd.google-apps.folder" ? handleDownloadFolder(file.id, file.name) : handleDownload(file.id, file.name); }}

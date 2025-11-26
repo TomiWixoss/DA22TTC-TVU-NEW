@@ -1,21 +1,38 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 
 interface TechRubikCubeProps {
   size?: number;
   color?: string;
   className?: string;
+  holdDuration?: number;
+  onHoldComplete?: () => void;
 }
 
 export const TechRubikCube: React.FC<TechRubikCubeProps> = ({
   size = 60,
   color = "#00ff88",
   className = "",
+  holdDuration = 2000,
+  onHoldComplete,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const cubeSize = size / 3;
   const gap = 2;
+
+  // Hold timer - trigger onHoldComplete after holdDuration
+  useEffect(() => {
+    if (isHovered && onHoldComplete) {
+      timerRef.current = setTimeout(() => {
+        onHoldComplete();
+      }, holdDuration);
+    }
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [isHovered, holdDuration, onHoldComplete]);
 
   // Generate 3x3x3 cube positions with random scatter positions
   const cubes: { x: number; y: number; z: number; scatterX: number; scatterY: number; scatterZ: number; delay: number }[] = [];

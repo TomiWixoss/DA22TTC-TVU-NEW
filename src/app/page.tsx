@@ -1,7 +1,7 @@
 "use client";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { TechLayout } from "@/components/layout";
 import {
   ParticleField,
@@ -16,6 +16,7 @@ import {
   VoidZone,
   TechRubikCube,
 } from "@/components/ui/tech";
+import { SecretProfile } from "@/components/home/SecretProfile";
 import { HardDrive, FileText, Lock, ChevronLeft, ChevronRight, Database } from "lucide-react";
 
 interface WorldCard {
@@ -78,10 +79,17 @@ export default function Home() {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [showSecret, setShowSecret] = useState(false);
   const dragStartX = useRef(0);
   const scrollStartX = useRef(0);
 
-  // No GSAP needed - using framer-motion instead
+  const handleCubeComplete = useCallback(() => {
+    setShowSecret(true);
+  }, []);
+
+  const handleBackFromSecret = useCallback(() => {
+    setShowSecret(false);
+  }, []);
 
   const goToWorld = (index: number) => {
     if (index >= 0 && index < worlds.length) {
@@ -116,7 +124,12 @@ export default function Home() {
   };
 
   return (
-    <TechLayout showGrid={false} accentColor="#00ff88">
+    <>
+      <AnimatePresence>
+        {showSecret && <SecretProfile onBack={handleBackFromSecret} />}
+      </AnimatePresence>
+
+      <TechLayout showGrid={false} accentColor="#00ff88">
       <div className="fixed inset-0 pointer-events-none">
         <ParticleField color="#00ff88" particleCount={40} speed={0.3} connectDistance={120} className="opacity-20" />
         <DataStream color="#00ff88" density={6} speed={50} className="opacity-5" />
@@ -330,8 +343,14 @@ export default function Home() {
         </div>
 
         {/* 3D Rubik Cube */}
-        <TechRubikCube size={30} color="#00ff88" />
+        <TechRubikCube 
+          size={30} 
+          color="#00ff88" 
+          holdDuration={2000}
+          onHoldComplete={handleCubeComplete}
+        />
       </motion.div>
-    </TechLayout>
+      </TechLayout>
+    </>
   );
 }

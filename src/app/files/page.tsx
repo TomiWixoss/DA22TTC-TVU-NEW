@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect, Suspense } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { TechLayout, TechSidebar } from "@/components/layout";
@@ -23,7 +23,7 @@ import {
   NeonText,
   HackerText,
 } from "@/components/ui/tech";
-import { useFileList } from "@/components/hooks/file-list";
+import { useFileList } from "@/hooks/useFileList";
 import {
   Dialog,
   DialogContent,
@@ -34,7 +34,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Toaster, toast } from "react-hot-toast";
-import useDrive from "@/components/hooks/drive";
+import { useDriveQuery } from "@/hooks/useDriveQuery";
 import { Menu, FolderPlus, Search, Sparkles, RefreshCw, Home, Settings } from "lucide-react";
 import Link from "next/link";
 
@@ -119,7 +119,7 @@ function FilesPageContent() {
     setNewFolderName,
     handleReloadCache,
     isReloading,
-  } = useDrive();
+  } = useDriveQuery();
 
   const {
     files: sortedFiles,

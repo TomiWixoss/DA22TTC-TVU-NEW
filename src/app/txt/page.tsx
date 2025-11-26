@@ -1,11 +1,11 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "highlight.js/styles/github-dark.css";
 import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import Link from "next/link";
-import { useNote } from "@/components/hooks/note";
+import { useNoteQuery } from "@/hooks/useNoteQuery";
 import { TechLayout } from "@/components/layout";
 import {
   ParticleField,
@@ -54,7 +54,7 @@ const TxtPage = () => {
     searchQuery,
     setSearchQuery,
     filteredNotes,
-  } = useNote();
+  } = useNoteQuery();
 
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [showAddForm, setShowAddForm] = useState(false);

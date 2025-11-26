@@ -27,5 +27,5 @@ export interface FileListProps {
   onUploadFile: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onUploadFolder: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onCheckFolderContent: (folderId: string) => Promise<boolean>;
-  onDelete?: (fileId: string) => Promise<void>;
+  onDelete?: (fileId: string) => void | Promise<void>;
 }

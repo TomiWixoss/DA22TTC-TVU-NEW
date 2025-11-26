@@ -390,6 +390,23 @@ export const TechRubikCube: React.FC<TechRubikCubeProps> = ({
           </span>
         </motion.div>
       )}
+
+      {/* INFO indicator pointing to cube */}
+      {phase === "idle" && (
+        <div className="absolute -left-20 top-1/2 -translate-y-1/2 flex items-center gap-2">
+          <span 
+            className="text-[10px] font-mono font-bold tracking-wider px-1.5 py-0.5 border"
+            style={{ 
+              color: color,
+              borderColor: color,
+              backgroundColor: `${color}15`,
+            }}
+          >
+            INFO
+          </span>
+          <span style={{ color: color }} className="text-sm">→</span>
+        </div>
+      )}
     </div>
   );
 };

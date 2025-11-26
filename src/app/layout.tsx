@@ -2,13 +2,11 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from './providers'
+import { defaultMetadata } from '@/lib/seo.config'
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  title: "TomiSakaeTech",
-  description: "Trang Web với các tiện ích thần kỳ!",
-};
+export const metadata: Metadata = defaultMetadata;
 
 export default function RootLayout({
   children,

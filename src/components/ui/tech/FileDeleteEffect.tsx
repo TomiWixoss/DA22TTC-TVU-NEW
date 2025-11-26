@@ -21,6 +21,7 @@ export function FileDeleteEffect({
   duration = 2500,
 }: FileDeleteEffectProps) {
   const [progress, setProgress] = useState(0);
+  const [isHidden, setIsHidden] = useState(false);
   const onCompleteRef = useRef(onComplete);
   const hasCompletedRef = useRef(false);
   
@@ -32,6 +33,7 @@ export function FileDeleteEffect({
   useEffect(() => {
     if (!isDeleting) {
       setProgress(0);
+      setIsHidden(false);
       hasCompletedRef.current = false;
       return;
     }
@@ -46,6 +48,9 @@ export function FileDeleteEffect({
         requestAnimationFrame(animate);
       } else if (!hasCompletedRef.current) {
         hasCompletedRef.current = true;
+        // Ẩn card ngay khi animation xong
+        setIsHidden(true);
+        // Gọi callback để trigger API delete
         onCompleteRef.current?.();
       }
     };
@@ -74,10 +79,15 @@ export function FileDeleteEffect({
     return (Math.random() - 0.5) * 2 * max * intensity;
   };
 
+  // Nếu đã ẩn (animation xong) và vẫn đang delete (chờ API) → không render gì
+  if (isHidden && isDeleting) {
+    return null;
+  }
+
   return (
     <div className={cn('relative', className)}>
       <AnimatePresence mode="wait">
-        {isDeleting ? (
+        {isDeleting && !isHidden ? (
           <motion.div
             key="deleting"
             className="relative"

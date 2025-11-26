@@ -85,6 +85,7 @@ export function useDriveQuery() {
   const deleteFileMutation = useMutation({
     mutationFn: driveService.deleteFile,
     onSuccess: () => {
+      setDeletingFileId(null);
       toast.success("File đã bị xóa vĩnh viễn!");
       queryClient.invalidateQueries({ queryKey: ["files"] });
     },
@@ -389,15 +390,18 @@ export function useDriveQuery() {
 
   const handleToggleAISearch = () => setIsAISearch(!isAISearch);
 
-  const startDeleteEffect = (fileId: string) => setDeletingFileId(fileId);
+  // Bắt đầu delete: set state + gọi API ngay lập tức
+  const startDeleteEffect = (fileId: string) => {
+    setDeletingFileId(fileId);
+    // Gọi API delete ngay khi bắt đầu animation
+    deleteFileMutation.mutate(fileId);
+  };
 
+  // Callback khi animation xong - không cần làm gì vì API đã được gọi rồi
   const handleDeleteComplete = useCallback(() => {
-    if (deletingFileId && !deleteFileMutation.isPending) {
-      const fileIdToDelete = deletingFileId;
-      setDeletingFileId(null); // Clear immediately to prevent double calls
-      deleteFileMutation.mutate(fileIdToDelete);
-    }
-  }, [deletingFileId, deleteFileMutation]);
+    // Animation xong, card sẽ tự ẩn qua FileDeleteEffect
+    // Nếu API lỗi, onError sẽ clear deletingFileId để hiện lại card
+  }, []);
 
   const handleDelete = (fileId: string) => deleteFileMutation.mutate(fileId);
 

@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { TechLayout } from "@/components/layout";
 import {
-  ParticleField,
   DataStream,
   GlitchText,
   TechBadge,
@@ -15,6 +14,7 @@ import {
   VoidText,
   VoidZone,
   TechRubikCube,
+  MagneticPixels,
 } from "@/components/ui/tech";
 import { SecretProfile } from "@/components/home/SecretProfile";
 import { HardDrive, FileText, Lock, ChevronLeft, ChevronRight, Database } from "lucide-react";
@@ -130,8 +130,19 @@ export default function Home() {
       </AnimatePresence>
 
       <TechLayout showGrid={false} accentColor="#00ff88">
+      {/* Magnetic Pixels Background */}
+      <MagneticPixels 
+        pixelSize={3}
+        gridGap={35}
+        color="#00ff88"
+        mouseRadius={100}
+        mouseStrength={0.5}
+        springStrength={0.06}
+        friction={0.88}
+        className="opacity-60"
+      />
+
       <div className="fixed inset-0 pointer-events-none">
-        <ParticleField color="#00ff88" particleCount={40} speed={0.3} connectDistance={120} className="opacity-20" />
         <DataStream color="#00ff88" density={6} speed={50} className="opacity-5" />
       </div>
 
@@ -178,7 +189,7 @@ export default function Home() {
                 {/* World Card - Wrap with VoidZone for coming_soon */}
                 <VoidZone active={world.status === "coming_soon"} intensity="medium">
                   <div
-                    className={`relative border-2 p-8 transition-all duration-300 cursor-pointer group ${
+                    className={`relative border-2 p-8 transition-all duration-300 cursor-pointer group bg-background/95 backdrop-blur-sm ${
                       world.status === "available"
                         ? "border-current"
                         : "border-muted-foreground/30"

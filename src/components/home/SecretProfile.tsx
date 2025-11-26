@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Github, Mail, MapPin, Terminal, ArrowLeft, Cpu, Zap, Database, Globe, Code2 } from "lucide-react";
-import { GlitchText, NeonBorder, ParticleField, HackerText, TechBadge } from "@/components/ui/tech";
+import { GlitchText, NeonBorder, MagneticPixels, HackerText, TechBadge } from "@/components/ui/tech";
 
 interface SecretProfileProps {
   onBack: () => void;
@@ -48,7 +48,16 @@ export const SecretProfile: React.FC<SecretProfileProps> = ({ onBack }) => {
     >
       {/* Background */}
       <div className="absolute inset-0">
-        <ParticleField color="#00ff88" particleCount={25} speed={0.15} className="opacity-10" />
+        <MagneticPixels 
+          pixelSize={3}
+          gridGap={35}
+          color="#00ff88"
+          mouseRadius={100}
+          mouseStrength={0.5}
+          springStrength={0.06}
+          friction={0.88}
+          className="opacity-50"
+        />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,black_100%)]" />
       </div>
 

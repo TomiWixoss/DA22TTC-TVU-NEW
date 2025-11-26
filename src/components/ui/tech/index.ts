@@ -43,3 +43,6 @@ export { TechToastContainer, techToast } from "./TechToast";
 
 // 3D Effects
 export { TechRubikCube } from "./TechRubikCube";
+
+// Background Effects
+export { MagneticPixels } from "./MagneticPixels";

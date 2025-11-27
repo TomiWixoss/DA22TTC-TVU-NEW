@@ -14,7 +14,7 @@ import {
   VoidText,
   VoidZone,
   TechRubikCube,
-  MagneticPixels,
+  CosmicBackground,
 } from "@/shared/components/tech";
 import { SecretProfile } from "@/worlds/home/components/SecretProfile";
 import { HardDrive, FileText, Lock, ChevronLeft, ChevronRight, Database } from "lucide-react";
@@ -130,17 +130,8 @@ export default function Home() {
       </AnimatePresence>
 
       <TechLayout showGrid={false} accentColor="#00ff88">
-      {/* Magnetic Pixels Background */}
-      <MagneticPixels 
-        pixelSize={3}
-        gridGap={35}
-        color="#00ff88"
-        mouseRadius={100}
-        mouseStrength={0.5}
-        springStrength={0.06}
-        friction={0.88}
-        className="opacity-60"
-      />
+      {/* Cosmic Universe Background - 3D Three.js */}
+      <CosmicBackground />
 
       <div className="fixed inset-0 pointer-events-none">
         <DataStream color="#00ff88" density={6} speed={50} className="opacity-5" />

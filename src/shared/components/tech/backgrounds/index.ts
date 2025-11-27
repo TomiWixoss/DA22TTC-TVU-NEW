@@ -1,6 +1,7 @@
 // Background & Pattern Components
 export * from "./BinaryRain";
 export * from "./CircuitLines";
+export * from "./CosmicBackground";
 export * from "./CyberGrid";
 export * from "./DataStream";
 export * from "./GridBackground";
